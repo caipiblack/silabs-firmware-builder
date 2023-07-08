@@ -19,43 +19,55 @@ docker run --rm -it \
   ghcr.io/nabucasa/silabs-firmware-builder:4.2.3
 ```
 
-To generate a project, use `slc generate`. To replicate/debug build issues in
-an existing GitHub action, it is often helpful to just copy the command from
-the "Generate Firmware Project" step. E.g. to build the Multiprotocol firmware
-for Yellow:
+To generate a project for the RCP Multi-PAN firmware for a ZBDongle-E, you can use:
 
 ```sh
-  slc generate \
-      --with="MGM210PA32JIA,simple_led:board_activity" \
-      --project-file="/gecko_sdk/protocol/openthread/sample-apps/ot-ncp/rcp-uart-802154.slcp" \
-      --export-destination=rcp-uart-802154-yellow \
-      --copy-proj-sources --new-project --force \
-      --configuration=""
-```
-
-To build the EmberZNet firmware for SkyConnect
-
-```sh
-  slc generate \
-      --with="EFR32MG21A020F512IM32" \
-      --project-file="/gecko_sdk/protocol/zigbee/app/ncp/sample-app/ncp-uart-hw/ncp-uart-hw.slcp" \
-      --export-destination=ncp-uart-hw-skyconnect \
-      --copy-proj-sources --new-project --force \
-      --configuration="SL_IOSTREAM_USART_VCOM_RX_BUFFER_SIZE:64,EMBER_APS_UNICAST_MESSAGE_COUNT:20,EMBER_NEIGHBOR_TABLE_SIZE:26,EMBER_SOURCE_ROUTE_TABLE_SIZE:200,"
+slc generate \
+  --with="EFR32MG21A020F768IM32,cpc_security_secondary_none" \
+  --project-file="/gecko_sdk/protocol/openthread/sample-apps/ot-ncp/rcp-uart-802154.slcp" \
+  --export-destination=rcp-uart-802154-zbdonglee \
+  --copy-proj-sources --new-project --force \
+  --configuration=""
 ```
 
 Apply patches to the generated firmware (Note: some firmwares also need patches
 to be applied to the SDK, see GitHub Action files):
 
 ```sh
-cd ncp-uart-hw-skyconnect
-for patchfile in ../EmberZNet/SkyConnect/*.patch; do patch -p1 < $patchfile; done
+cd /opt/slc_cli/rcp-uart-802154-zbdonglee
+for patchfile in ../RCPMultiPAN/ZBDongleE-460/*.patch; do patch -p1 < $patchfile; done
 ```
 
 Then build it using commands from the "Build Firmware" step:
 
 ```sh
 make -f ncp-uart-hw.Makefile release
+```
+
+Create the .gbl file:
+
+```
+commander gbl create /tmp/rcp-uart-802154.gbl --app /opt/slc_cli/rcp-uart-802154-zbdonglee/build/release/rcp-uart-802154.out --device EFR32MG21A020F768IM32
+```
+
+Extract the .gbl from the docker:
+
+```
+sudo docker cp 784bd10ad15d:/tmp/rcp-uart-802154.gbl /tmp
+```
+
+### Flash the firmware
+
+Install the flasher software with pip:
+
+```
+pip install universal-silabs-flasher
+```
+
+Flash the firmware:
+
+```
+universal-silabs-flasher --device /dev/ttyACM0 flash --firmware /tmp/rcp-uart-802154.gbl
 ```
 
 ### Update patches
