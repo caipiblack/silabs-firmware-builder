@@ -1,6 +1,6 @@
---- a/config/sl_device_init_hfxo_config.h.orig	2023-03-11 14:40:52.065526045 +0100
-+++ b/config/sl_device_init_hfxo_config.h	2023-03-11 14:41:23.249640718 +0100
-@@ -46,7 +46,7 @@
+--- a/config/sl_device_init_hfxo_config.h	2023-07-08 19:33:28.000000000 +0200
++++ b/config/sl_device_init_hfxo_config.h	2023-07-08 19:39:21.906873971 +0200
+@@ -50,7 +50,7 @@
  
  // <o SL_DEVICE_INIT_HFXO_CTUNE> CTUNE <0-255>
  // <i> Default: 140
