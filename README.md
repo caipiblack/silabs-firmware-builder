@@ -1,16 +1,29 @@
 # Silicon Labs firmware builder repository
+This repository contains tools for building firmwares for the Home Assistant Connect
+ZBT-1/SkyConnect and the Home Assistant Yellow's IEEE 802.15.4 radio. The firmware
+manifests are entirely generic, however, and are intended to be written easily for any
+Silicon Labs EFR32 device.
 
-This repository contains Dockerfiles and GitHub actions which build Silicon Labs
-firmware for Home Assistant Yellow and SkyConnect.
+It uses the Silicon Labs Gecko SDK and proprietary Silicon Labs tools such as the
+Silicon Labs Configurator (slc) and the Simplicity Commander standalone utility.
 
-It uses the Silicon Labs Gecko SDK and proprietary Silicon Labs tools such as
-the Silicon Labs Configurator (slc) and the Simplicity Commander standalone
-utility.
+## Background
+The projects contained within this repository are configured for the BRD4001A dev kit
+with a BRD4179B (EFR32MG21) module. This allows base projects to be debugged using
+the Simplicity Studio IDE. These base projects are then retargeted for other boards
+using manifest files. For example, the [`skyconnect_ncp-uart-hw.yaml`](https://github.com/NabuCasa/silabs-firmware-builder/blob/main/manifests/skyconnect_ncp-uart-hw.yaml)
+manifest file retargets the base firmware to the SkyConnect/Connect ZBT-1.
 
-## Building locally
+## Setting up Simplicity Studio (for development)
+If you are going to be developing using Simplicity Studio, note that each project can
+potentially use a different Gecko SDK release. It is recommended to forego the typical
+Simplicity Studio SDK management workflow and manually manage SDKs:
 
-To build a firmware locally the build container can be reused. Simply start the
-container local with this repository bind-mounted as /build, e.g.
+1. Clone a specific version of the Gecko SDK:
+   ```bash
+   # For macOS
+   mkdir ~/SimplicityStudio/SDKs/gecko_sdk_4.4.2
+   cd ~/SimplicityStudio/SDKs/gecko_sdk_4.4.2
 
 ```sh
 sudo docker build --tag "nabucasa" .
@@ -172,3 +185,4 @@ git am ../EmberZNet/SkyConnect/*.patch
 git format-patch -N --output-directory=../EmberZNet/SkyConnect/ HEAD~2
 ```
 
+Once the build is complete, the firmwares will be in the `output` directory.

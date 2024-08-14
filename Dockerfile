@@ -10,18 +10,21 @@ RUN \
        git \
        git-lfs \
        jq \
+       yq \
        libgl1 \
        make \
        default-jre-headless \
        patch \
        python3 \
-       unzip
+       python3-ruamel.yaml \
+       unzip \
+       xz-utils
 
 # Install Simplicity Commander (unfortunately no stable URL available, this
 # is known to be working with Commander_linux_x86_64_1v15p0b1306.tar.bz).
 RUN \
     curl -O https://www.silabs.com/documents/login/software/SimplicityCommander-Linux.zip \
-    && unzip SimplicityCommander-Linux.zip \
+    && unzip -q SimplicityCommander-Linux.zip \
     && tar -C /opt -xjf SimplicityCommander-Linux/Commander_linux_x86_64_*.tar.bz \
     && rm -r SimplicityCommander-Linux \
     && rm SimplicityCommander-Linux.zip
@@ -31,27 +34,34 @@ ENV PATH="$PATH:/opt/commander"
 # Install Silicon Labs Configurator (slc)
 RUN \
     curl -O https://www.silabs.com/documents/login/software/slc_cli_linux.zip \
-    && unzip -d /opt slc_cli_linux.zip \
+    && unzip -q -d /opt slc_cli_linux.zip \
     && rm slc_cli_linux.zip
 
 ENV PATH="$PATH:/opt/slc_cli"
 
-ARG GCC_ARM_VERSION="10.3-2021.10"
-
-# Install ARM GCC embedded toolchain
+# GCC Embedded Toolchain 12.2.rel1 (for Gecko SDK 4.4.0+)
 RUN \
-    curl -O https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/${GCC_ARM_VERSION}/gcc-arm-none-eabi-${GCC_ARM_VERSION}-x86_64-linux.tar.bz2 \
-    && tar -C /opt -xjf gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2 \
-    && rm gcc-arm-none-eabi-${GCC_ARM_VERSION}-x86_64-linux.tar.bz2
+    curl -O https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz \
+    && tar -C /opt -xf arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz \
+    && rm arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz
 
-ENV PATH="$PATH:/opt/gcc-arm-none-eabi-${GCC_ARM_VERSION}/bin"
-
-ARG GECKO_SDK_VERSION="v4.3.2"
-
+# GCC Embedded Toolchain 10.3-2021.10 (for earlier Gecko SDKs)
 RUN \
-    git clone --depth 1 -b ${GECKO_SDK_VERSION} \
-       https://github.com/SiliconLabs/gecko_sdk.git \
-    && rm -rf gecko_sdk/.git
+    curl -O https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2 \
+    && tar -C /opt -xf gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2 \
+    && rm gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+
+# Gecko SDK 4.4.3
+RUN \
+    curl -o gecko_sdk_4.4.3.zip -L https://github.com/SiliconLabs/gecko_sdk/releases/download/v4.4.3/gecko-sdk.zip \
+    && unzip -q -d gecko_sdk_4.4.3 gecko_sdk_4.4.3.zip \
+    && rm gecko_sdk_4.4.3.zip
+
+# Gecko SDK 4.3.1
+RUN \
+    curl -o gecko_sdk_4.3.1.zip -L https://github.com/SiliconLabs/gecko_sdk/releases/download/v4.3.1/gecko-sdk.zip \
+    && unzip -q -d gecko_sdk_4.3.1 gecko_sdk_4.3.1.zip \
+    && rm gecko_sdk_4.3.1.zip
 
 ARG USERNAME=builder
 ARG USER_UID=1000
@@ -63,11 +73,3 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 USER $USERNAME
 WORKDIR /build
-
-RUN \
-    slc configuration \
-           --sdk="/gecko_sdk/" \
-    && slc signature trust --sdk "/gecko_sdk/" \
-    && slc configuration \
-           --gcc-toolchain="/opt/gcc-arm-none-eabi-${GCC_ARM_VERSION}/"
-
